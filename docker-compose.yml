@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "${PORT:-5002}:${PORT:-5002}"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - kinom
+    restart: unless-stopped
+
+  kinom:
+    image: mongo:6
+    container_name: kinom
+    ports:
+      - "27017:27017"
+    volumes:
+      - kinom-data:/data/db
+    restart: unless-stopped
+
+volumes:
+  kinom-data:

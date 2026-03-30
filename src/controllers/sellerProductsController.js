@@ -1,0 +1,66 @@
+const Product = require('../models/Product');
+const SellerAccount = require('../models/SellerAccount');
+const asyncHandler = require('../utils/asyncHandler');
+const { sendSuccess, sendError } = require('../utils/response');
+const { getPagination } = require('../utils/pagination');
+
+const list = asyncHandler(async (req, res) => {
+  const { limit, skip, page } = getPagination(req);
+  const items = await Product.find().skip(skip).limit(limit).sort({ createdAt: -1 });
+  return sendSuccess(res, { items, page, limit });
+});
+
+const listMy = asyncHandler(async (req, res) => {
+  const seller = await SellerAccount.findOne({ userId: req.user._id });
+  if (!seller) return sendError(res, 'Seller account required', 403);
+  const { limit, skip, page } = getPagination(req);
+  const items = await Product.find({ sellerId: seller._id }).skip(skip).limit(limit).sort({ createdAt: -1 });
+  return sendSuccess(res, { items, page, limit });
+});
+
+const listAll = asyncHandler(async (req, res) => {
+  const { limit, skip, page } = getPagination(req);
+  const items = await Product.find().skip(skip).limit(limit).sort({ createdAt: -1 });
+  return sendSuccess(res, { items, page, limit });
+});
+
+const getById = asyncHandler(async (req, res) => {
+  const item = await Product.findById(req.params.id);
+  if (!item) return sendError(res, 'Product not found', 404);
+  return sendSuccess(res, { item });
+});
+
+const create = asyncHandler(async (req, res) => {
+  const seller = await SellerAccount.findOne({ userId: req.user._id });
+  if (!seller) return sendError(res, 'Seller account required', 403);
+
+  const payload = req.body || {};
+  if (!payload.price) return sendError(res, 'price is required', 400);
+
+  const item = await Product.create({ ...payload, sellerId: seller._id });
+  return sendSuccess(res, { item }, 'Created');
+});
+
+const update = asyncHandler(async (req, res) => {
+  const seller = await SellerAccount.findOne({ userId: req.user._id });
+  if (!seller) return sendError(res, 'Seller account required', 403);
+
+  const item = await Product.findOneAndUpdate(
+    { _id: req.params.id, sellerId: seller._id },
+    { $set: req.body || {} },
+    { new: true }
+  );
+  if (!item) return sendError(res, 'Product not found', 404);
+  return sendSuccess(res, { item }, 'Updated');
+});
+
+const remove = asyncHandler(async (req, res) => {
+  const seller = await SellerAccount.findOne({ userId: req.user._id });
+  if (!seller) return sendError(res, 'Seller account required', 403);
+
+  const item = await Product.findOneAndDelete({ _id: req.params.id, sellerId: seller._id });
+  if (!item) return sendError(res, 'Product not found', 404);
+  return sendSuccess(res, { item }, 'Deleted');
+});
+
+module.exports = { list, listMy, listAll, getById, create, update, remove };
