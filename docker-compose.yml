@@ -1,12 +1,14 @@
 services:
-  backend:
+  kinombackend:
+    container_name: kinombackend
     build: .
     ports:
-      - "${PORT:-5002}:${PORT:-5002}"
+      - "${PORT:-5000}:${PORT:-5000}"
     env_file:
       - .env
     environment:
       NODE_ENV: production
+      PORT: 5000
     volumes:
       - ./uploads:/app/uploads
     depends_on:
