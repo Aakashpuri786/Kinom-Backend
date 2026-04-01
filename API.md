@@ -330,6 +330,68 @@ Default: 300 requests per 60 seconds per IP.
 
 ---
 
+## Product Images (Beginner Guide)
+
+This is the simplest way to show the correct product image in both the product list and product detail screens.
+
+### Step 1: Upload the image
+Endpoint:
+- `POST /api/uploads`
+- Auth: user token required
+- Content-Type: `multipart/form-data`
+- Field: `file`
+
+Response example:
+```json
+{
+  "success": true,
+  "data": {
+    "file": {
+      "path": "uploads/1711900000000-photo.jpg",
+      "url": "http://localhost:5000/uploads/1711900000000-photo.jpg"
+    }
+  }
+}
+```
+
+Important:
+- Save `data.file.url` from this response. This is the full image URL your app can display directly.
+
+### Step 2: Create the product with imageUrl
+Endpoint:
+- `POST /api/seller-products`
+
+Body example:
+```json
+{
+  "imageUrl": "http://localhost:5000/uploads/1711900000000-photo.jpg",
+  "moneyValue": "USD",
+  "price": 1200,
+  "category": "Electronics",
+  "symbol": "$",
+  "dob": "",
+  "description": "Product description here"
+}
+```
+
+### Step 3: Show product list with images
+Endpoint:
+- `GET /api/seller-products/all`
+
+Each product has `imageUrl`, so your UI should render it directly.
+
+### Step 4: Show product details with image
+Endpoint:
+- `GET /api/seller-products/:id`
+
+The response includes `imageUrl`, so the product detail page can show the same image.
+
+### Notes for beginners
+- Images are served by the backend at `/uploads/...`.
+- If you saved only `uploads/filename.jpg` in the database, you must add the server base URL in the frontend.
+  Example: `http://localhost:5000/` + `uploads/filename.jpg`
+- Best practice: always save the full URL returned by the upload endpoint (`data.file.url`).
+
 ## Socket.io (Real-Time)
 
 - URL: `http://localhost:5000`
@@ -380,4 +442,3 @@ curl -X POST http://localhost:5000/api/auth/register -H "Content-Type: applicati
 ```
 
 ---
-
