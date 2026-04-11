@@ -2,8 +2,23 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const defaultCorsOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:19006',
+  'http://127.0.0.1:19006',
+  'http://localhost:8081',
+  'http://127.0.0.1:8081',
+  'http://localhost:19000',
+  'http://127.0.0.1:19000',
+  'http://localhost:19001',
+  'http://127.0.0.1:19001',
+  'http://localhost:19002',
+  'http://127.0.0.1:19002'
+];
+
 const splitOrigins = (value) => {
-  if (!value) return ['*'];
+  if (!value) return defaultCorsOrigins;
   return value
     .split(',')
     .map((v) => v.trim())
@@ -15,8 +30,17 @@ const resolveCors = () => {
   return splitOrigins(raw);
 };
 
+const corsOrigins = resolveCors();
+const allowNoOrigin = process.env.CORS_ALLOW_NO_ORIGIN !== 'false';
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return allowNoOrigin;
+  if (corsOrigins.includes('*')) return true;
+  return corsOrigins.includes(origin);
+};
+
 module.exports = {
-  port: process.env.PORT || 5002,
+  port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
   mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/kinom',
   jwtSecret: process.env.JWT_SECRET || 'change_me',
@@ -25,7 +49,9 @@ module.exports = {
   adminBootstrapEmail: process.env.ADMIN_EMAIL || process.env.ADMIN_BOOTSTRAP_EMAIL || '',
   adminBootstrapPassword: process.env.ADMIN_PASSWORD || process.env.ADMIN_BOOTSTRAP_PASSWORD || '',
   adminBootstrapName: process.env.ADMIN_NAME || 'Admin',
-  corsOrigins: resolveCors(),
+  corsOrigins,
+  allowNoOrigin,
+  isOriginAllowed,
   baseUrl: process.env.BASE_URL || '',
   rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 60000),
   rateLimitMax: Number(process.env.RATE_LIMIT_MAX || 300),

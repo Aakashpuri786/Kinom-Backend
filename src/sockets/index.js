@@ -1,15 +1,20 @@
 const { Server } = require('socket.io');
-const { corsOrigins } = require('../config/env');
+const { isOriginAllowed } = require('../config/env');
+
+let ioInstance = null;
 
 const setupSocket = (server) => {
-  const io = new Server(server, {
+  ioInstance = new Server(server, {
     cors: {
-      origin: corsOrigins.includes('*') ? '*' : corsOrigins,
+      origin(origin, callback) {
+        if (isOriginAllowed(origin)) return callback(null, true);
+        return callback(new Error('Origin not allowed by Socket.IO'));
+      },
       methods: ['GET', 'POST']
     }
   });
 
-  io.on('connection', (socket) => {
+  ioInstance.on('connection', (socket) => {
     socket.on('join', (room) => {
       if (room) socket.join(room);
     });
@@ -20,6 +25,10 @@ const setupSocket = (server) => {
       }
     });
   });
+
+  return ioInstance;
 };
 
-module.exports = { setupSocket };
+const getIo = () => ioInstance;
+
+module.exports = { setupSocket, getIo };

@@ -1,12 +1,11 @@
 const Post = require('../models/Post');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/response');
-const { getPagination } = require('../utils/pagination');
+const { getIo } = require('../sockets');
 
 const list = asyncHandler(async (req, res) => {
-  const { limit, skip, page } = getPagination(req);
-  const items = await Post.find().skip(skip).limit(limit).sort({ createdAt: -1 });
-  return sendSuccess(res, { items, page, limit });
+  const items = await Post.find().sort({ createdAt: -1 });
+  return sendSuccess(res, { items, total: items.length });
 });
 
 const getById = asyncHandler(async (req, res) => {
@@ -16,24 +15,37 @@ const getById = asyncHandler(async (req, res) => {
 });
 
 const create = asyncHandler(async (req, res) => {
-  const { title, content, imageUrl, tags } = req.body || {};
+  const { title, content, imageUrl, tags, source, authorId } = req.body || {};
   if (!title || !content) return sendError(res, 'title and content are required', 400);
-  const item = await Post.create({ authorId: req.user._id, title, content, imageUrl, tags });
-  return sendSuccess(res, { item }, 'Created');
+  const item = await Post.create({
+    title,
+    content,
+    imageUrl: imageUrl || '',
+    tags: Array.isArray(tags) ? tags : [],
+    source: source || 'shared',
+    authorId: authorId || null
+  });
+
+  const io = getIo();
+  if (io) {
+    io.emit('new_post', item);
+  }
+
+  return res.status(201).json({
+    success: true,
+    data: { item },
+    message: 'Created'
+  });
 });
 
 const update = asyncHandler(async (req, res) => {
-  const item = await Post.findOneAndUpdate(
-    { _id: req.params.id, authorId: req.user._id },
-    { $set: req.body || {} },
-    { new: true }
-  );
+  const item = await Post.findByIdAndUpdate(req.params.id, { $set: req.body || {} }, { new: true });
   if (!item) return sendError(res, 'Post not found', 404);
   return sendSuccess(res, { item }, 'Updated');
 });
 
 const remove = asyncHandler(async (req, res) => {
-  const item = await Post.findOneAndDelete({ _id: req.params.id, authorId: req.user._id });
+  const item = await Post.findByIdAndDelete(req.params.id);
   if (!item) return sendError(res, 'Post not found', 404);
   return sendSuccess(res, { item }, 'Deleted');
 });
