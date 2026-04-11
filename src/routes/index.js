@@ -16,7 +16,19 @@ const reviewsRoutes = require('./reviews.routes');
 const uploadsRoutes = require('./uploads.routes');
 const healthRoutes = require('./health.routes');
 
+const User = require('../models/User');
+
 const router = express.Router();
+
+// Debug route for user listing (Pretty-printed)
+router.get('/users-list', async (req, res) => {
+  try {
+    const users = await User.find({}, '-passwordHash');
+    res.json({ success: true, count: users.length, users });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 router.use('/auth', authRoutes);
 router.use('/admin-auth', adminAuthRoutes);

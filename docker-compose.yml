@@ -1,25 +1,33 @@
 services:
   backend:
+    container_name: kinom-backend
     build: .
     ports:
-      - "${PORT:-5002}:${PORT:-5002}"
+      - "5000:5000"
     env_file:
-      - .env
+      - .env.docker
     environment:
       NODE_ENV: production
     volumes:
       - ./uploads:/app/uploads
     depends_on:
-      - kinom
+      mongo:
+        condition: service_healthy
     restart: unless-stopped
 
-  kinom:
-    image: mongo:6
-    container_name: kinom
-    ports:
-      - "27017:27017"
+  mongo:
+    image: mongo:7
+    container_name: kinom-backend-mongo
+    expose:
+      - "27017"
     volumes:
       - kinom-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
 volumes:

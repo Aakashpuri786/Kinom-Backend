@@ -8,21 +8,27 @@ const fs = require('fs');
 const routes = require('./routes');
 const limiter = require('./middleware/rateLimit');
 const { notFound, errorHandler } = require('./middleware/error');
-const { corsOrigins, uploadDir } = require('./config/env');
+const { isOriginAllowed, uploadDir } = require('./config/env');
 
 const app = express();
+
+app.set('json spaces', 2);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (isOriginAllowed(origin)) return callback(null, true);
+    return callback(new Error('Origin not allowed by CORS'));
+  },
+  credentials: true
+};
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 app.use(helmet());
-app.use(
-  cors({
-    origin: corsOrigins.includes('*') ? '*' : corsOrigins,
-    credentials: true
-  })
-);
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
