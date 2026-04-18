@@ -2,6 +2,7 @@ const SellerAccount = require('../models/SellerAccount');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/response');
 const { sendMail, hasSmtpConfig } = require('../utils/mailer');
+const { sanitizeSellerAccount, sanitizePublicSellerAccount } = require('../utils/serializers');
 
 const requestOtp = asyncHandler(async (req, res) => {
   const { fullName, phoneNumber, address, zipCode } = req.body || {};
@@ -31,7 +32,11 @@ const requestOtp = asyncHandler(async (req, res) => {
     }
   }
 
-  return sendSuccess(res, { sellerAccount: account, otpSent }, 'OTP sent');
+  return sendSuccess(
+    res,
+    { sellerAccount: sanitizeSellerAccount(account), otpSent },
+    'OTP sent'
+  );
 });
 
 const verifyOtp = asyncHandler(async (req, res) => {
@@ -50,7 +55,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
   account.otpExpiresAt = undefined;
   await account.save();
 
-  return sendSuccess(res, { sellerAccount: account }, 'Verified');
+  return sendSuccess(res, { sellerAccount: sanitizeSellerAccount(account) }, 'Verified');
 });
 
 const ensure = asyncHandler(async (req, res) => {
@@ -58,19 +63,19 @@ const ensure = asyncHandler(async (req, res) => {
   if (!account) {
     return sendError(res, 'Seller account not found. Request OTP first.', 404);
   }
-  return sendSuccess(res, { sellerAccount: account });
+  return sendSuccess(res, { sellerAccount: sanitizeSellerAccount(account) });
 });
 
 const me = asyncHandler(async (req, res) => {
   const account = await SellerAccount.findOne({ userId: req.user._id });
   if (!account) return sendError(res, 'Seller account not found', 404);
-  return sendSuccess(res, { sellerAccount: account });
+  return sendSuccess(res, { sellerAccount: sanitizeSellerAccount(account) });
 });
 
 const publicAccount = asyncHandler(async (req, res) => {
   const account = await SellerAccount.findById(req.params.id).select('-otpCode -otpExpiresAt');
   if (!account) return sendError(res, 'Seller account not found', 404);
-  return sendSuccess(res, { sellerAccount: account });
+  return sendSuccess(res, { sellerAccount: sanitizePublicSellerAccount(account) });
 });
 
 module.exports = { requestOtp, verifyOtp, ensure, me, publicAccount };

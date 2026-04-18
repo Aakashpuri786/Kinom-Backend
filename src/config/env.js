@@ -60,5 +60,6 @@ module.exports = {
   smtpPort: Number(process.env.SMTP_PORT || 587),
   smtpUser: process.env.SMTP_USER || '',
   smtpPass: process.env.SMTP_PASS || '',
-  mailFrom: process.env.MAIL_FROM || ''
+  mailFrom: process.env.MAIL_FROM || '',
+  uploadMaxFileSizeMb: Number(process.env.UPLOAD_MAX_FILE_SIZE_MB || 5)
 };
