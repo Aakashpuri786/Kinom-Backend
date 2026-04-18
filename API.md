@@ -214,19 +214,19 @@ Default: 300 requests per 60 seconds per IP.
 
 ---
 
-## Seller Products (User Token Required)
+## Seller Products
 
-1. `GET /api/seller-products`
-2. `GET /api/seller-products/my`
-3. `GET /api/seller-products/all`
-4. `GET /api/seller-products/:id`
-5. `POST /api/seller-products`
+1. `GET /api/seller-products` (public, active products only)
+2. `GET /api/seller-products/:id` (public, active products only)
+3. `GET /api/seller-products/my` (user token required)
+4. `GET /api/seller-products/all` (user token required)
+5. `POST /api/seller-products` (verified seller account required)
 - Body:
 ```json
 { "imageUrl": "", "moneyValue": "", "price": 0, "category": "", "symbol": "", "dob": "", "description": "" }
 ```
-6. `PATCH /api/seller-products/:id`
-7. `DELETE /api/seller-products/:id`
+6. `PATCH /api/seller-products/:id` (seller owner only)
+7. `DELETE /api/seller-products/:id` (seller owner only)
 
 ---
 
@@ -236,13 +236,18 @@ Default: 300 requests per 60 seconds per IP.
 2. `POST /api/orders`
 - Body:
 ```json
-{ "items": [{ "productId": "", "quantity": 1 }], "total": 0, "sellerId": "" }
+{ "items": [{ "productId": "", "quantity": 1 }] }
 ```
+- Notes:
+  - Total is calculated by the server.
+  - All items must belong to one seller.
 3. `PATCH /api/orders/:id/status`
 - Body:
 ```json
-{ "status": "" }
+{ "status": "cancelled" }
 ```
+- Notes:
+  - Users can only cancel their own pending orders.
 4. `DELETE /api/orders/:id`
 
 ---
@@ -270,13 +275,13 @@ Default: 300 requests per 60 seconds per IP.
 
 1. `GET /api/posts` (public)
 2. `GET /api/posts/:id` (public)
-3. `POST /api/posts` (user token required)
+3. `POST /api/posts` (user or admin token required)
 - Body:
 ```json
 { "title": "", "content": "", "imageUrl": "", "tags": [] }
 ```
-4. `PUT /api/posts/:id` (user token required)
-5. `DELETE /api/posts/:id` (user token required)
+4. `PUT /api/posts/:id` (author user or admin)
+5. `DELETE /api/posts/:id` (author user or admin)
 
 ---
 
@@ -284,13 +289,13 @@ Default: 300 requests per 60 seconds per IP.
 
 1. `GET /api/gallery` (public)
 2. `GET /api/gallery/:id` (public)
-3. `POST /api/gallery` (user or admin token)
+3. `POST /api/gallery` (admin token)
 - Body:
 ```json
 { "title": "", "imageUrl": "", "description": "", "date": "" }
 ```
-4. `PUT /api/gallery/:id` (user or admin token)
-5. `DELETE /api/gallery/:id` (user or admin token)
+4. `PUT /api/gallery/:id` (admin token)
+5. `DELETE /api/gallery/:id` (admin token)
 
 ---
 
@@ -298,13 +303,13 @@ Default: 300 requests per 60 seconds per IP.
 
 1. `GET /api/reviews` (public)
 2. `GET /api/reviews/:id` (public)
-3. `POST /api/reviews` (public)
+3. `POST /api/reviews` (admin token)
 - Body:
 ```json
 { "name": "", "title": "", "quote": "", "avatarUrl": "", "rating": 5 }
 ```
-4. `PUT /api/reviews/:id` (user or admin token)
-5. `DELETE /api/reviews/:id` (user or admin token)
+4. `PUT /api/reviews/:id` (admin token)
+5. `DELETE /api/reviews/:id` (admin token)
 
 ---
 
@@ -315,10 +320,10 @@ Default: 300 requests per 60 seconds per IP.
 ```json
 { "name": "", "email": "", "subject": "", "message": "" }
 ```
-2. `GET /api/contact` (public)
-3. `GET /api/contact/:id` (public)
-4. `PUT /api/contact/:id` (public)
-5. `DELETE /api/contact/:id` (public)
+2. `GET /api/contact` (admin token)
+3. `GET /api/contact/:id` (admin token)
+4. `PUT /api/contact/:id` (admin token)
+5. `DELETE /api/contact/:id` (admin token)
 
 ---
 
@@ -326,6 +331,7 @@ Default: 300 requests per 60 seconds per IP.
 
 1. `POST /api/uploads`
 - FormData: `file`
+- Allowed file types: `jpg`, `jpeg`, `png`, `webp`, `gif`, `pdf`
 - Returns: `{ file: { path, url } }`
 
 ---
@@ -336,6 +342,10 @@ Default: 300 requests per 60 seconds per IP.
 - Events:
 1. `join` (client -> server)
 - Payload: `room` string
+- Notes:
+  - Public rooms should use the `public:` prefix.
+  - Private rooms should use `conversation:<id>`, `user:<id>`, or `admin:<id>`.
+  - Private rooms require a valid socket auth token.
 2. `message` (client -> server)
 - Payload: `{ room, ...data }`
 3. `message` (server -> client)
@@ -365,6 +375,7 @@ Default: 300 requests per 60 seconds per IP.
 - `RATE_LIMIT_WINDOW_MS`
 - `RATE_LIMIT_MAX`
 - `UPLOAD_DIR`
+- `UPLOAD_MAX_FILE_SIZE_MB`
 
 ---
 

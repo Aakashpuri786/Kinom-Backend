@@ -4,6 +4,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { sendSuccess, sendError } = require('../utils/response');
 const { signAdminToken } = require('../utils/token');
 const { adminBootstrapEmail, adminBootstrapPassword, adminBootstrapName } = require('../config/env');
+const { sanitizeAdmin } = require('../utils/serializers');
 
 const ensureBootstrapAdmin = async (email, password) => {
   if (!adminBootstrapEmail || !adminBootstrapPassword) return null;
@@ -39,7 +40,7 @@ const login = asyncHandler(async (req, res) => {
   if (!ok) return sendError(res, 'Invalid credentials', 401);
 
   const token = signAdminToken(admin);
-  return sendSuccess(res, { token, admin }, 'Logged in');
+  return sendSuccess(res, { token, admin: sanitizeAdmin(admin) }, 'Logged in');
 });
 
 const verify = asyncHandler(async (req, res) => {
@@ -49,7 +50,7 @@ const verify = asyncHandler(async (req, res) => {
 });
 
 const me = asyncHandler(async (req, res) => {
-  return sendSuccess(res, { admin: req.admin });
+  return sendSuccess(res, { admin: sanitizeAdmin(req.admin) });
 });
 
 module.exports = { login, verify, me };

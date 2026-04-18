@@ -10,7 +10,11 @@ const productSchema = new mongoose.Schema(
     symbol: { type: String, default: '' },
     dob: { type: String, default: '' },
     description: { type: String, default: '' },
-    status: { type: String, enum: ['active', 'inactive'], default: 'active' }
+    status: {
+      type: String,
+      enum: ['available', 'processing', 'sold', 'removed', 'active', 'inactive'],
+      default: 'available'
+    }
   },
   { timestamps: true }
 );
